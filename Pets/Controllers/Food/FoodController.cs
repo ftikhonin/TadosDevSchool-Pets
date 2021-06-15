@@ -1,4 +1,6 @@
-﻿namespace Pets.Controllers.Food
+﻿using Pets.Queries;
+
+namespace Pets.Controllers.Food
 {
     using System;
     using System.Collections.Generic;
@@ -14,7 +16,7 @@
     using Microsoft.AspNetCore.Mvc;
     using Models;
     using Providers;
-
+    using static Sqls;
 
     [ApiController]
     [Route("api/food")]
@@ -27,14 +29,14 @@
         public async Task<IActionResult> GetList(FoodGetListRequest request)
         {
             List<Food> foods = new List<Food>();
-            
+
             await using SQLiteConnection connection = new SQLiteConnection(DatabaseProvider.ConnectionString);
             await connection.OpenAsync();
 
             await using DbTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
             await using SQLiteCommand command = connection.CreateCommand();
-            
+
             List<string> conditions = new List<string>();
 
             if (!string.IsNullOrWhiteSpace(request.Search))
@@ -64,7 +66,7 @@
             while (await reader.ReadAsync())
             {
                 Food food = CreateFromReader(reader);
-                
+
                 foods.Add(food);
             }
 
@@ -74,7 +76,7 @@
             {
                 Foods = foods,
             };
-            
+
             return Json(response);
         }
 
@@ -92,14 +94,7 @@
             await using DbTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
             await using SQLiteCommand command = connection.CreateCommand();
-            command.CommandText = @"
-                SELECT
-                    f.Id,
-                    f.Name,
-                    f.AnimalType,
-                    f.Count
-                FROM Food f
-                WHERE f.Id = @Id";
+            command.CommandText = GetFood;
 
             command.Parameters.AddWithValue("Id", request.Id);
 
@@ -116,7 +111,7 @@
             {
                 Food = food,
             };
-            
+
             return Json(response);
         }
 
@@ -132,19 +127,15 @@
                 Name = request.Name.Trim(),
                 AnimalType = request.AnimalType
             };
-            
+
             await using SQLiteConnection connection = new SQLiteConnection(DatabaseProvider.ConnectionString);
             await connection.OpenAsync();
 
             await using DbTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
             await using SQLiteCommand checkCommand = connection.CreateCommand();
-            checkCommand.CommandText = @"
-                SELECT
-                    COUNT(1)
-                FROM Food f
-                WHERE f.Name = @Name AND f.AnimalType = @AnimalType";
-            
+            checkCommand.CommandText = CountFood;
+
             checkCommand.Parameters.AddWithValue("Name", food.Name);
             checkCommand.Parameters.AddWithValue("AnimalType", food.AnimalType);
 
@@ -154,20 +145,8 @@
                 throw new Exception($"Food with name {food.Name} for {food.AnimalType} already exists");
 
             await using SQLiteCommand insertCommand = connection.CreateCommand();
-            insertCommand.CommandText = @"
-                INSERT INTO Food
-                (
-                    Name,
-                    AnimalType,
-                    Count    
-                )
-                VALUES
-                (
-                    @Name,
-                    @AnimalType,
-                    @Count
-                ); SELECT last_insert_rowid();";
-            
+            insertCommand.CommandText = InsertFood;
+
             insertCommand.Parameters.AddWithValue("Name", food.Name);
             insertCommand.Parameters.AddWithValue("AnimalType", food.AnimalType);
             insertCommand.Parameters.AddWithValue("Count", food.Count);
@@ -180,7 +159,7 @@
             {
                 Id = food.Id,
             };
-            
+
             return Json(response);
         }
 
@@ -196,22 +175,17 @@
             await using DbTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
             await using SQLiteCommand command = connection.CreateCommand();
-            command.CommandText = @"
-                UPDATE Food
-                SET
-                    Count = Count + @Count
-                WHERE
-                    Food.Id = @Id";
+            command.CommandText = UpdateCount;
 
             command.Parameters.AddWithValue("Id", request.Id);
             command.Parameters.AddWithValue("Count", request.Count);
 
             await command.ExecuteNonQueryAsync();
-            
+
             await transaction.CommitAsync();
 
             FoodAppendResponse response = new FoodAppendResponse();
-            
+
             return Json(response);
         }
 
