@@ -1,4 +1,6 @@
-﻿namespace Pets.Controllers.Breed
+﻿using Pets.Queries;
+
+namespace Pets.Controllers.Breed
 {
     using System;
     using System.Collections.Generic;
@@ -13,7 +15,7 @@
     using Microsoft.AspNetCore.Mvc;
     using Models;
     using Providers;
-
+    using static Sqls;
 
     [ApiController]
     [Route("api/breed")]
@@ -91,13 +93,7 @@
             await using DbTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
             await using SQLiteCommand command = connection.CreateCommand();
-            command.CommandText = @"
-                SELECT
-                    b.Id,
-                    b.Name,
-                    b.AnimalType
-                FROM Breed b
-                WHERE b.Id = @Id";
+            command.CommandText = GetBreed;
 
             command.Parameters.AddWithValue("Id", request.Id);
 
@@ -136,12 +132,9 @@
             await using DbTransaction transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
             await using SQLiteCommand checkCommand = connection.CreateCommand();
-            checkCommand.CommandText = @"
-                SELECT
-                    COUNT(1)
-                FROM Breed b
-                WHERE b.Name = @Name AND b.AnimalType = @AnimalType";
-            
+            checkCommand.CommandText = CountBreed;
+
+
             checkCommand.Parameters.AddWithValue("Name", breed.Name);
             checkCommand.Parameters.AddWithValue("AnimalType", (int)breed.AnimalType);
 
@@ -151,17 +144,7 @@
                 throw new Exception($"Breed with name {breed.Name} for {breed.AnimalType} already exists");
 
             await using SQLiteCommand insertCommand = connection.CreateCommand();
-            insertCommand.CommandText = @"
-                INSERT INTO Breed
-                (
-                    Name,
-                    AnimalType    
-                )
-                VALUES
-                (
-                    @Name,
-                    @AnimalType
-                ); SELECT last_insert_rowid();";
+            insertCommand.CommandText = InsertBreed;
             
             insertCommand.Parameters.AddWithValue("Name", breed.Name);
             insertCommand.Parameters.AddWithValue("AnimalType", (int)breed.AnimalType);

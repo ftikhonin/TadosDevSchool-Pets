@@ -1,4 +1,5 @@
-﻿namespace Pets.Controllers.Animal
+﻿    using static Pets.Queries.Sqls;
+namespace Pets.Controllers.Animal
 {
     using System;
     using System.Collections.Generic;
@@ -156,31 +157,7 @@
 
             await using SQLiteCommand command = connection.CreateCommand();
 
-            command.CommandText = @"
-                SELECT
-                    a.Id AId,
-                    a.Type AType,
-                    a.Name AName,
-                    b.Id BId,
-                    b.AnimalType BAnimalType,
-                    b.Name BName,
-                    c.Weight CWeight,
-                    d.TailLength DTailLength,
-                    f2.Id F2Id,
-                    f2.AnimalType F2AnimalType,
-                    f2.Name F2Name,
-                    f2.Count F2Count,
-                    f1.Id F1Id,
-                    f1.DateTimeUtc F1DateTimeUtc,
-                    f1.Count F1Count
-                FROM Animal a
-                JOIN Breed b ON b.Id = a.BreedId
-                LEFT JOIN Cat c ON c.AnimalId = a.Id
-                LEFT JOIN Dog d ON d.AnimalId = a.Id
-                LEFT JOIN Feeding f1 ON f1.AnimalId = a.Id
-                LEFT JOIN Food f2 ON f1.FoodId = f2.Id
-                WHERE a.Id = @Id
-                ORDER BY f1.DateTimeUtc DESC";
+            command.CommandText = GetAnimal;
 
             command.Parameters.AddWithValue("Id", request.Id);
 
@@ -242,11 +219,7 @@
 
             request.Name = request.Name?.Trim();
 
-            checkAnimalCommand.CommandText = @"
-                SELECT
-                    COUNT(1)
-                FROM Animal a
-                WHERE a.Name = @Name;";
+            checkAnimalCommand.CommandText = CountAnimal;
 
             checkAnimalCommand.Parameters.AddWithValue("Name", request.Name);
 
@@ -257,11 +230,8 @@
 
             await using SQLiteCommand checkBreedCommand = connection.CreateCommand();
 
-            checkBreedCommand.CommandText = @"
-                SELECT
-                    COUNT(1)
-                FROM Breed b
-                WHERE b.Id = @BreedId AND b.AnimalType = @Type";
+            checkBreedCommand.CommandText = CountBreedAnimalType;
+
             checkBreedCommand.Parameters.AddWithValue("BreedId", request.BreedId);
             checkBreedCommand.Parameters.AddWithValue("Type", request.Type);
             
@@ -272,20 +242,7 @@
             
             await using SQLiteCommand insertAnimalCommand = connection.CreateCommand();
 
-            insertAnimalCommand.CommandText = @"
-                INSERT INTO Animal
-                (
-                    Type,
-                    Name,
-                    BreedId
-                )
-                VALUES 
-                (
-                    @Type,
-                    @Name,
-                    @BreedId
-                ); SELECT last_insert_rowid()";
-
+            insertAnimalCommand.CommandText = InsertAnimal;
             insertAnimalCommand.Parameters.AddWithValue("Type", (int)request.Type);
             insertAnimalCommand.Parameters.AddWithValue("Name", request.Name);
             insertAnimalCommand.Parameters.AddWithValue("BreedId", request.BreedId);
@@ -299,17 +256,7 @@
 
                     await using (SQLiteCommand insertCatCommand = connection.CreateCommand())
                     {
-                        insertCatCommand.CommandText = @"
-                            INSERT INTO Cat
-                            (
-                                AnimalId,
-                                Weight
-                            )
-                            VALUES
-                            (
-                                @AnimalId,
-                                @Weight
-                            )";
+                        insertCatCommand.CommandText = InsertCat;
                         insertCatCommand.Parameters.AddWithValue("AnimalId", animalId);
                         insertCatCommand.Parameters.AddWithValue("Weight", weight);
 
@@ -323,17 +270,7 @@
 
                     await using (SQLiteCommand insertDogCommand = connection.CreateCommand())
                     {
-                        insertDogCommand.CommandText = @"
-                            INSERT INTO Dog
-                            (
-                                AnimalId,
-                                TailLength
-                            )
-                            VALUES
-                            (
-                                @AnimalId,
-                                @TailLength
-                            )";
+                        insertDogCommand.CommandText = InsertDog;
                         insertDogCommand.Parameters.AddWithValue("AnimalId", animalId);
                         insertDogCommand.Parameters.AddWithValue("TailLength", tailLength);
 
@@ -381,10 +318,7 @@
             
             await using SQLiteCommand checkFoodCommand = connection.CreateCommand();
 
-            checkFoodCommand.CommandText = @"
-                SELECT
-                    COUNT(1)
-                FROM Food f WHERE f.Id = @FoodId AND f.AnimalType = @AnimalType AND f.Count >= @Count";
+            checkFoodCommand.CommandText = CountFoodAnimalTypeCount;
             checkFoodCommand.Parameters.AddWithValue("FoodId", request.FoodId);
             checkFoodCommand.Parameters.AddWithValue("AnimalType", (int)animalType);
             checkFoodCommand.Parameters.AddWithValue("Count", request.Count);
@@ -397,21 +331,7 @@
 
             await using SQLiteCommand insertFeedingCommand = connection.CreateCommand();
 
-            insertFeedingCommand.CommandText = @"
-                INSERT INTO Feeding
-                (
-                    AnimalId,
-                    FoodId,
-                    DateTimeUtc,
-                    Count
-                )
-                VALUES
-                (
-                    @AnimalId,
-                    @FoodId,
-                    @DateTimeUtc,
-                    @Count
-                );";
+            insertFeedingCommand.CommandText = InsertFeeding;
 
             insertFeedingCommand.Parameters.AddWithValue("AnimalId", request.AnimalId);
             insertFeedingCommand.Parameters.AddWithValue("FoodId", request.FoodId);

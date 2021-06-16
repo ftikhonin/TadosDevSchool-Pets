@@ -14,6 +14,7 @@ namespace Pets.Queries
 
     public static class Sqls
     {
+        #region food
         public const string GetFood = @"
                 SELECT
                     f.Id,
@@ -43,11 +44,48 @@ namespace Pets.Queries
                     @Count
                 ); SELECT last_insert_rowid();";
 
+
         public const string UpdateCount = @"
                 UPDATE Food
                 SET
                     Count = Count + @Count
                 WHERE
                     Food.Id = @Id";
+        #endregion
+
+        #region breed
+        public const string GetBreed = @"
+                SELECT
+                    b.Id,
+                    b.Name,
+                    b.AnimalType
+                FROM Breed b
+                WHERE b.Id = @Id";
+
+        public const string CountBreed = @"
+                SELECT
+                    COUNT(1)
+                FROM Breed b
+                WHERE b.Name = @Name AND b.AnimalType = @AnimalType";
+
+        public const string InsertBreed = @"
+                INSERT INTO Breed
+                (
+                    Name,
+                    AnimalType    
+                )
+                VALUES
+                (
+                    @Name,
+                    @AnimalType
+                ); SELECT last_insert_rowid();";
+
+        #endregion
+
+        #region animal
+
+        
+
+        #endregion
     }
 }
