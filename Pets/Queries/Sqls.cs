@@ -83,8 +83,101 @@ namespace Pets.Queries
         #endregion
 
         #region animal
+        public const string GetAnimal = @"
+                SELECT
+                    a.Id AId,
+                    a.Type AType,
+                    a.Name AName,
+                    b.Id BId,
+                    b.AnimalType BAnimalType,
+                    b.Name BName,
+                    c.Weight CWeight,
+                    d.TailLength DTailLength,
+                    f2.Id F2Id,
+                    f2.AnimalType F2AnimalType,
+                    f2.Name F2Name,
+                    f2.Count F2Count,
+                    f1.Id F1Id,
+                    f1.DateTimeUtc F1DateTimeUtc,
+                    f1.Count F1Count
+                FROM Animal a
+                JOIN Breed b ON b.Id = a.BreedId
+                LEFT JOIN Cat c ON c.AnimalId = a.Id
+                LEFT JOIN Dog d ON d.AnimalId = a.Id
+                LEFT JOIN Feeding f1 ON f1.AnimalId = a.Id
+                LEFT JOIN Food f2 ON f1.FoodId = f2.Id
+                WHERE a.Id = @Id
+                ORDER BY f1.DateTimeUtc DESC";
 
-        
+        public const string CountAnimal = @"
+                SELECT
+                    COUNT(1)
+                FROM Animal a
+                WHERE a.Name = @Name;";
+        public const string CountBreedAnimalType = @"
+                SELECT
+                    COUNT(1)
+                FROM Breed b
+                WHERE b.Id = @BreedId AND b.AnimalType = @Type";
+
+        public const string InsertAnimal = @"
+                INSERT INTO Animal
+                (
+                    Type,
+                    Name,
+                    BreedId
+                )
+                VALUES 
+                (
+                    @Type,
+                    @Name,
+                    @BreedId
+                ); SELECT last_insert_rowid()";
+
+        public const string InsertCat = @"
+                            INSERT INTO Cat
+                            (
+                                AnimalId,
+                                Weight
+                            )
+                            VALUES
+                            (
+                                @AnimalId,
+                                @Weight
+                            )";
+
+        public const string InsertDog = @"
+                            INSERT INTO Dog
+                            (
+                                AnimalId,
+                                TailLength
+                            )
+                            VALUES
+                            (
+                                @AnimalId,
+                                @TailLength
+                            )";
+
+        public const string CountFoodAnimalTypeCount = @"
+                SELECT
+                    COUNT(1)
+                FROM Food f WHERE f.Id = @FoodId AND f.AnimalType = @AnimalType AND f.Count >= @Count";
+
+        public const string InsertFeeding = @"
+                INSERT INTO Feeding
+                (
+                    AnimalId,
+                    FoodId,
+                    DateTimeUtc,
+                    Count
+                )
+                VALUES
+                (
+                    @AnimalId,
+                    @FoodId,
+                    @DateTimeUtc,
+                    @Count
+                );";
 
         #endregion
     }

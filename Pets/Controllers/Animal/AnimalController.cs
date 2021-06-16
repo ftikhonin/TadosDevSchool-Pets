@@ -1,4 +1,5 @@
-﻿    using static Pets.Queries.Sqls;
+﻿using Pets.Queries;
+
 namespace Pets.Controllers.Animal
 {
     using System;
@@ -16,7 +17,7 @@ namespace Pets.Controllers.Animal
     using Microsoft.AspNetCore.Mvc;
     using Models;
     using Providers;
-
+    using static Sqls;
     [ApiController]
     [Route("api/animal")]
     public class AnimalController : Controller
